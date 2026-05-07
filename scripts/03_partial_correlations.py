@@ -30,6 +30,15 @@ key_predictors = {
 controls = ['YEAR', 'Sex', 'Age']
 construct_controls = ['KOC', 'ROC', 'Distress']
 
+
+def get_first_existing(row, possible_names, default=''):
+    """Return a value from the first matching column name."""
+    for name in possible_names:
+        if name in row.index:
+            return row[name]
+    return default
+
+
 results = []
 
 for predictor, label in key_predictors.items():
@@ -53,21 +62,12 @@ for predictor, label in key_predictors.items():
 
     row = pc.iloc[0]
 
-    # Different Pingouin versions name the CI column differently.
-    ci_col = None
-    for possible_name in ['CI95%', 'CI95', 'CI95%_r']:
-        if possible_name in pc.columns:
-            ci_col = possible_name
-            break
-
-    ci_value = row[ci_col] if ci_col is not None else ''
-
     results.append({
         'Predictor': label,
-        'Partial_r': row['r'],
-        'CI95': ci_value,
-        'p_value': row['p-val'],
-        'n': row['n'],
+        'Partial_r': get_first_existing(row, ['r', 'R']),
+        'CI95': get_first_existing(row, ['CI95%', 'CI95', 'CI95%_r', 'ci95']),
+        'p_value': get_first_existing(row, ['p-val', 'p_val', 'pvalue', 'p-value', 'p']),
+        'n': get_first_existing(row, ['n', 'N']),
         'Controls': ', '.join(covars)
     })
 
