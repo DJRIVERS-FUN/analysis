@@ -8,3 +8,4 @@ seaborn
 pingouin
 openpyxl
 factor_analyzer
+semopy
