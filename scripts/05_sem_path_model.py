@@ -2,12 +2,12 @@ import os
 
 import pandas as pd
 import matplotlib.pyplot as plt
-from semopy import Model
+from semopy import Model, calc_stats
 from semopy.inspector import inspect
 
 # Load dataset
 FILE = 'data/381completeanalysis.xlsx'
-df = pd.read_excel(FILE)
+df = pd.read_excel(FILE).copy()
 
 # Ensure output folders exist
 os.makedirs('outputs', exist_ok=True)
@@ -15,16 +15,13 @@ os.makedirs('figures', exist_ok=True)
 
 # Compute executive-function composite
 uef_subscales = ['SAS', 'CROE', 'CMOR', 'VOBL', 'MEST', 'DM', 'CROB']
-df['EXECFUNC_COMPOSITE'] = df[uef_subscales].mean(axis=1)
+execfunc_composite = df[uef_subscales].mean(axis=1).rename('EXECFUNC_COMPOSITE')
 
 # Select variables
-analysis_df = df[[
-    'Distress',
-    'KOC',
-    'ROC',
-    'EXECFUNC_COMPOSITE',
-    'GPARAW'
-]].dropna().copy()
+analysis_df = pd.concat([
+    df[['Distress', 'KOC', 'ROC', 'GPARAW']],
+    execfunc_composite
+], axis=1).dropna().copy()
 
 # SEM / path model
 # Theoretical structure:
@@ -45,8 +42,9 @@ estimates = inspect(model)
 estimates.to_csv('outputs/sem_parameter_estimates.csv', index=False)
 
 # Model fit statistics
-stats = model.calc_stats()
-fit_df = pd.DataFrame(stats, index=[0])
+# semopy versions differ: recent versions expose calc_stats(model) as a function.
+stats = calc_stats(model)
+fit_df = pd.DataFrame(stats)
 fit_df.to_csv('outputs/sem_fit_statistics.csv', index=False)
 
 # Simple path diagram using matplotlib
@@ -106,3 +104,5 @@ print('- outputs/sem_fit_statistics.csv')
 print('- figures/sem_path_model.png\n')
 
 print(estimates)
+print('\nFit statistics:')
+print(fit_df)
