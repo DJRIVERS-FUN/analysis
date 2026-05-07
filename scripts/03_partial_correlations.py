@@ -51,12 +51,23 @@ for predictor, label in key_predictors.items():
         method='pearson'
     )
 
+    row = pc.iloc[0]
+
+    # Different Pingouin versions name the CI column differently.
+    ci_col = None
+    for possible_name in ['CI95%', 'CI95', 'CI95%_r']:
+        if possible_name in pc.columns:
+            ci_col = possible_name
+            break
+
+    ci_value = row[ci_col] if ci_col is not None else ''
+
     results.append({
         'Predictor': label,
-        'Partial_r': pc.loc['pearson', 'r'],
-        'CI95': pc.loc['pearson', 'CI95%'],
-        'p_value': pc.loc['pearson', 'p-val'],
-        'n': pc.loc['pearson', 'n'],
+        'Partial_r': row['r'],
+        'CI95': ci_value,
+        'p_value': row['p-val'],
+        'n': row['n'],
         'Controls': ', '.join(covars)
     })
 
@@ -64,8 +75,7 @@ results_df = pd.DataFrame(results)
 results_df.to_csv('outputs/partial_correlations.csv', index=False)
 
 # Plot partial correlations
-plot_df = results_df.copy()
-plot_df = plot_df.sort_values('Partial_r')
+plot_df = results_df.copy().sort_values('Partial_r')
 
 plt.figure(figsize=(8, 5))
 plt.barh(plot_df['Predictor'], plot_df['Partial_r'])
